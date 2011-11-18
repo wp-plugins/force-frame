@@ -1,9 +1,9 @@
-=== p2p-wpml === 
+=== force-frame === 
 Contributors: lencinhaus
 Tags: frame, iframe, force
 Requires at least: 3.2.1
 Tested up to: 3.2.1
-Stable tag: trunk
+Stable tag: 1.0
 
 Force a Wordpress site inside a frame or iframe.
 
@@ -13,22 +13,16 @@ Force a Wordpress site inside a frame or iframe.
 
 = Features =
 
-
-* **Feature 1**:
-
-	* bla
-	* bla
-	
-= Caveats =
-
-* caveat 1
+* **Redirect to parent site**: when users access your website directly, they will be redirected to the parent site where your site is shown in a frame or iframe.
+* **Inject site's URL into parent site's URL**: when users navigate between pages in your site, the URL they navigate to is injected in the parent site's URL using the fragment or a GET parameter; if the parent site's URL is then shared, the iframe will load the correct page of your site
 
 Links: [Author's Site](http://www.cubica.eu)
 
 == Installation ==
 
 1. Extract the downloadable archive inside *wp-content/plugins*, and activate in Wordpress administration.
-1. The plugin can be configured accessing the **Force Frame** link inside the Settings menu.
+2. The plugin can be configured accessing the **Force Frame** link inside the Settings menu.
+3. For the plugin to work, the parent site's URL must point to a web page containing an iframe pointing to your website's homepage.
 
 == Frequently Asked Questions == 
 = Question? =
