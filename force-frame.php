@@ -2,12 +2,12 @@
 /*
 Plugin Name: Force Frame
 Description: A plugin that forces the Wordpress site as an iframe into a configurable parent site
-Version: 1.0
+Version: 1.1
 Author: Lorenzo Carrara <lorenzo.carrara@cubica.eu>
 Author URI: http://www.cubica.eu
 */
 
-define('FORCE_FRAME_VERSION', '1.0');
+define('FORCE_FRAME_VERSION', '1.1');
 define('FORCE_FRAME_TEXT_DOMAIN', 'force_frame');
 
 class ForceFrameAdmin {
@@ -133,83 +133,43 @@ class ForceFrame {
 	const MODE_FRAGMENT = 'fragment';
 	
 	public static function init() {
-		add_action('wp_head', array(__CLASS__, 'wp_head'));
+		// add with high priority so config data comes before js
+		add_action('wp_head', array(__CLASS__, 'wp_head'), 0);
+		add_action('wp_enqueue_scripts', array(__CLASS__, 'wp_enqueue_scripts'));
+		
+		$scriptName = 'force-frame';
+		if(!defined('WP_DEBUG') || !WP_DEBUG) $scriptName .= '.min';
+		$scriptName .= '.js';
+		wp_register_script('force-frame.js', plugins_url('js/' . $scriptName, __FILE__), array('jquery'), FORCE_FRAME_VERSION);
+	}
+	
+	public static function wp_enqueue_scripts() {
+		wp_enqueue_script('force-frame.js');
 	}
 	
 	public static function wp_head() {
-		// check if we have a parent url
-		$parentUrl = ForceFrameAdmin::get_parent_url();
-		$getParam = ForceFrameAdmin::get_get_param();
-		if(!empty($parentUrl)) {
+		// check the plugin is enabled
+		if(self::isEnabled()) {
+			$parentUrl = ForceFrameAdmin::get_parent_url();
+			$getParam = ForceFrameAdmin::get_get_param();
 ?>
 <script type="text/javascript">
-(function() {
-	// configs
-	var parentUrl = '<?php echo $parentUrl; ?>';
-	var getParam = '<?php echo ForceFrameAdmin::get_get_param(); ?>';
-	var useAbsoluteUrl = <?php echo ForceFrameAdmin::get_use_absolute_url()?'true':'false'?>;
-	var mode = '<?php echo ForceFrameAdmin::get_mode(); ?>';
-	var modeFragment = '<?php echo ForceFrame::MODE_FRAGMENT; ?>';
-	var modeGet = '<?php echo ForceFrame::MODE_GET; ?>';
-		
-	var innerLocation = document.location;
-	var frameUrl = innerLocation.pathname + innerLocation.search;
-	if(useAbsoluteUrl) {
-		if(innerLocation.host) {
-			frameUrl = innerLocation.host + frameUrl;
-			if(innerLocation.protocol) frameUrl = innerLocation.protocol + '//' + frameUrl;
-		}
-	}
-	var parentLocation = window.parent.document.location;
-
-	if(parentLocation.href.substring(0, parentUrl.length) != parentUrl || window.parent.__force_frame_check) {
-		var correctParentUrl = parentUrl + parentLocation.search;
-		if(mode == modeFragment) {
-			correctParentUrl += '#' + escape(frameUrl);
-		}
-		else if(mode == modeGet) {
-			var getAssignment = escape(getParam) + '=' + escape(frameUrl);
-			var regex = new RegExp(getParam + '=([^&]*)', 'g');
-			if(correctParentUrl.match(regex)) correctParentUrl = correctParentUrl.replace(regex, getAssignment);
-			else {
-				var separator = (correctParentUrl.indexOf('?') === -1)?'?':'&';
-				correctParentUrl += separator + getAssignment;
-			}
-		}
-
-		if(parentLocation.href != correctParentUrl) {
-			window.parent.document.location.href = correctParentUrl;
-		}
-	}
-	else {
-		window.parent.__force_frame_check = true;
-		var requiredFrameUrl = null;
-		if(parentLocation.hash && mode == modeFragment) {
-			requiredFrameUrl = unescape(parentLocation.hash.substring(1));
-		}
-		else if(parentLocation.search && mode == modeGet) {
-			var regex = new RegExp(escape(getParam) + '=([^&]*)');
-			var matches = regex.exec(parentLocation.search);
-			if(matches && matches.length >= 2) {
-				requiredFrameUrl = unescape(matches[1]);
-			}
-		}
-		
-		if(requiredFrameUrl && frameUrl != requiredFrameUrl) {
-			if(!useAbsoluteUrl) {
-				if(innerLocation.host) {
-					requiredFrameUrl = innerLocation.host + requiredFrameUrl;
-					if(innerLocation.protocol) requiredFrameUrl = innerLocation.protocol + '//' + requiredFrameUrl;
-				}
-			}
-
-			innerLocation.href = requiredFrameUrl;
-		}
-	}
-})();
+var forceFrameConfig = {
+	parentUrl: '<?php echo $parentUrl; ?>',
+	getParam: '<?php echo ForceFrameAdmin::get_get_param(); ?>',
+	useAbsoluteUrl: <?php echo ForceFrameAdmin::get_use_absolute_url()?'true':'false'?>,
+	mode: '<?php echo ForceFrameAdmin::get_mode(); ?>',
+	modeFragment: '<?php echo ForceFrame::MODE_FRAGMENT; ?>',
+	modeGet: '<?php echo ForceFrame::MODE_GET; ?>'
+};
 </script>
 <?php
 		}
+	}
+	
+	public static function isEnabled() {
+		$parentUrl = ForceFrameAdmin::get_parent_url();
+		return !empty($parentUrl);
 	}
 }
 

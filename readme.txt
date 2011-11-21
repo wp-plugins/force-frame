@@ -3,7 +3,7 @@ Contributors: lencinhaus
 Tags: frame, iframe, force
 Requires at least: 3.2.1
 Tested up to: 3.2.1
-Stable tag: 1.0
+Stable tag: 1.1
 
 Force a Wordpress site inside a frame or iframe.
 
@@ -36,6 +36,10 @@ Answer
  
 = 1.0 = 
 * First version 
+
+= 1.1 =
+* Corrected some bugs
+* Externalized and minified JS
 
 == Upgrade Notice == 
 = 1.0 =
