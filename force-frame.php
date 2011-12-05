@@ -2,12 +2,12 @@
 /*
 Plugin Name: Force Frame
 Description: A plugin that forces the Wordpress site as an iframe into a configurable parent site
-Version: 1.1
+Version: 1.2
 Author: Lorenzo Carrara <lorenzo.carrara@cubica.eu>
 Author URI: http://www.cubica.eu
 */
 
-define('FORCE_FRAME_VERSION', '1.1');
+define('FORCE_FRAME_VERSION', '1.2');
 define('FORCE_FRAME_TEXT_DOMAIN', 'force_frame');
 
 class ForceFrameAdmin {
@@ -131,16 +131,46 @@ class ForceFrameAdmin {
 class ForceFrame {
 	const MODE_GET = 'get';
 	const MODE_FRAGMENT = 'fragment';
+	const PARENT_JS_AJAX_ACTION = 'force_frame_parent_js';
 	
 	public static function init() {
 		// add with high priority so config data comes before js
 		add_action('wp_head', array(__CLASS__, 'wp_head'), 0);
 		add_action('wp_enqueue_scripts', array(__CLASS__, 'wp_enqueue_scripts'));
+		add_action('wp_ajax_' . self::PARENT_JS_AJAX_ACTION, array(__CLASS__, 'parent_js'));
+		add_action('wp_ajax_nopriv_' . self::PARENT_JS_AJAX_ACTION, array(__CLASS__, 'parent_js'));
 		
-		$scriptName = 'force-frame';
-		if(!defined('WP_DEBUG') || !WP_DEBUG) $scriptName .= '.min';
-		$scriptName .= '.js';
+		$scriptName = self::getJsFilename('force-frame');
 		wp_register_script('force-frame.js', plugins_url('js/' . $scriptName, __FILE__), array('jquery'), FORCE_FRAME_VERSION);
+	}
+	
+	public static function parent_js() {
+		header('Content-Type: text/javascript');
+		
+		// ensure the plugin is enabled
+		if(self::isEnabled()) {
+			$parentJsConfig = array(
+				'pluginUrl' => plugin_dir_url(__FILE__),
+				'parentJsUrl' => self::getParentJsUrl(),
+// 				'parentUrl' => ForceFrameAdmin::get_parent_url(),
+				'childUrl' => get_bloginfo('wpurl'),
+				'getParam' => ForceFrameAdmin::get_get_param(),
+				'useAbsoluteUrl' => ForceFrameAdmin::get_use_absolute_url(),
+				'mode' => ForceFrameAdmin::get_mode(),
+				'modeFragment' => ForceFrame::MODE_FRAGMENT,
+				'modeGet' => ForceFrame::MODE_GET
+			);
+			
+			echo 'var ForceFrameParentConfig = ' . json_encode($parentJsConfig) . ";\n";
+			$jsPath = substr(plugin_dir_path(__FILE__), 0, -1) . DIRECTORY_SEPARATOR . 'js' . DIRECTORY_SEPARATOR;
+			// append easyxdm code
+			$easyXDMPath = $jsPath . 'easyxdm' . DIRECTORY_SEPARATOR . self::getJsFilename('easyxdm');
+			readfile($easyXDMPath);
+			 
+			$parentJsPath = $jsPath . self::getJsFilename('force-frame.parent');
+			readfile($parentJsPath);
+		}
+		die();
 	}
 	
 	public static function wp_enqueue_scripts() {
@@ -150,18 +180,18 @@ class ForceFrame {
 	public static function wp_head() {
 		// check the plugin is enabled
 		if(self::isEnabled()) {
-			$parentUrl = ForceFrameAdmin::get_parent_url();
-			$getParam = ForceFrameAdmin::get_get_param();
+			$childJsConfig = array(
+				'parentUrl' => ForceFrameAdmin::get_parent_url(),
+				'childUrl' => get_bloginfo('wpurl'),
+				'getParam' => ForceFrameAdmin::get_get_param(),
+				'useAbsoluteUrl' => ForceFrameAdmin::get_use_absolute_url(),
+				'mode' => ForceFrameAdmin::get_mode(),
+				'modeFragment' => ForceFrame::MODE_FRAGMENT,
+				'modeGet' => ForceFrame::MODE_GET
+			);
 ?>
 <script type="text/javascript">
-var forceFrameConfig = {
-	parentUrl: '<?php echo $parentUrl; ?>',
-	getParam: '<?php echo ForceFrameAdmin::get_get_param(); ?>',
-	useAbsoluteUrl: <?php echo ForceFrameAdmin::get_use_absolute_url()?'true':'false'?>,
-	mode: '<?php echo ForceFrameAdmin::get_mode(); ?>',
-	modeFragment: '<?php echo ForceFrame::MODE_FRAGMENT; ?>',
-	modeGet: '<?php echo ForceFrame::MODE_GET; ?>'
-};
+var ForceFrameChildConfig = <?php echo json_encode($childJsConfig); ?>; 
 </script>
 <?php
 		}
@@ -170,6 +200,16 @@ var forceFrameConfig = {
 	public static function isEnabled() {
 		$parentUrl = ForceFrameAdmin::get_parent_url();
 		return !empty($parentUrl);
+	}
+	
+	private static function getParentJsUrl() {
+		return admin_url('admin-ajax.php') . '?action=' . self::PARENT_JS_AJAX_ACTION;
+	}
+	
+	private static function getJsFilename($name) {
+		if(!defined('WP_DEBUG') || !WP_DEBUG) $name .= '.min';
+		$name .= '.js';
+		return $name;
 	}
 }
 

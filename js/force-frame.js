@@ -1,8 +1,9 @@
 if(window.jQuery) {
 	(function($) {
-		if(!window.forceFrameConfig) return;
+		var cfgVar = 'ForceFrameChildConfig';
+		if(!window[cfgVar]) return;
 		
-		var cfg = window.forceFrameConfig;
+		var cfg = window[cfgVar];
 	
 		var isEmpty = function(obj) {
 			for(var name in obj) {
@@ -76,56 +77,29 @@ if(window.jQuery) {
 	
 			return completeParentUrl;
 		};
-			
+
 		var innerLocation = document.location;
-		var frameUrl = innerLocation.pathname + innerLocation.search;
-		if(cfg.useAbsoluteUrl) {
-			if(innerLocation.host) {
-				frameUrl = innerLocation.host + frameUrl;
-				if(innerLocation.protocol) frameUrl = innerLocation.protocol + '//' + frameUrl;
+		
+		var frameUrl = innerLocation.href;
+		if(!cfg.useAbsoluteUrl) frameUrl = frameUrl.substring(cfg.childUrl.length);
+		
+		try {
+			if(window.parent == window) {
+				innerLocation.href = buildParentUrl(frameUrl);
+			}
+			else {
+				if(window.parent.forceFrameIntermediateSocket) {
+					$(window).load(function() {
+						var height = document.body.clientHeight || document.body.offsetHeight || document.body.scrollHeight;
+						//window.parent.document.getElementsByTagName('iframe')[0].style.height = (height + 10) + 'px';
+						var message = frameUrl + "\n" + height;
+						window.parent.forceFrameIntermediateSocket.postMessage(message);
+					});
+				}
 			}
 		}
-		var parentLocation = window.parent.document.location;
-	
-		var isParentOnCorrectUrl = parentLocation.href.substring(0, cfg.parentUrl.length) == cfg.parentUrl;
-	
-		// is this site in an iframe, and is parent on the correct url?
-		if(!isParentOnCorrectUrl) {
-			// redirect parent to the correct url
-			parentLocation.href = buildParentUrl(frameUrl);
-		}
-		else {
-			// extract parent frame url
-			var parentFrameUrl = null;
-			if(parentLocation.hash && cfg.mode == cfg.modeFragment) {
-				parentFrameUrl = unescape(parentLocation.hash.substring(1));
-			}
-			else if(parentLocation.search && cfg.mode == cfg.modeGet) {
-				var regex = new RegExp(escape(cfg.getParam) + '=([^&]*)');
-				var matches = regex.exec(parentLocation.search);
-				if(matches && matches.length >= 2) {
-					parentFrameUrl = unescape(matches[1]);
-				}
-			}
-	
-			var parentFirstSeen = !window.parent.__force_frame_check;
-			if(parentFirstSeen) window.parent.__force_frame_check = true;
-	
-			if(!parentFrameUrl || parentFrameUrl != frameUrl) {
-				if(parentFirstSeen && parentFrameUrl) {
-					if(!cfg.useAbsoluteUrl) {
-						if(innerLocation.host) {
-							parentFrameUrl = innerLocation.host + parentFrameUrl;
-							if(innerLocation.protocol) parentFrameUrl = innerLocation.protocol + '//' + parentFrameUrl;
-						}
-					}
-	
-					innerLocation.href = parentFrameUrl;
-				}
-				else {
-					parentLocation.href = buildParentUrl(frameUrl, parentLocation.search);
-				}
-			}
+		catch(err)
+		{
 		}
 	})(jQuery);
 }
