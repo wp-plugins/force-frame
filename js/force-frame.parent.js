@@ -23,7 +23,39 @@
 		return params;
 	};
 	
+	var getWindowScroll = function() {
+		var scrOfX = 0, scrOfY = 0;
+		if( typeof( window.pageYOffset ) == 'number' ) {
+			//Netscape compliant
+			scrOfY = window.pageYOffset;
+			scrOfX = window.pageXOffset;
+		} else if( document.body && ( document.body.scrollLeft || document.body.scrollTop ) ) {
+			//DOM compliant
+			scrOfY = document.body.scrollTop;
+			scrOfX = document.body.scrollLeft;
+		} else if( document.documentElement && ( document.documentElement.scrollLeft || document.documentElement.scrollTop ) ) {
+		    //IE6 standards compliant mode
+		    scrOfY = document.documentElement.scrollTop;
+		    scrOfX = document.documentElement.scrollLeft;
+		}
+		return [ scrOfX, scrOfY ];
+	};
+	
+	var scrollToEl = function(el) {
+		var windowScroll = getWindowScroll();
+		
+		var elTop = 0;
+		if(el.offsetParent) {
+			do {
+				elTop += el.offsetTop;
+			} while (el = el.offsetParent);
+		}
+		
+		if(windowScroll[1] > elTop) window.scroll(windowScroll[0], elTop);
+	}
+	
 	if(window.easyXDM && window[configVar]) {
+		var easyXDM = window.easyXDM.noConflict('force-frame');
 		var cfg = window[configVar];
 		
 		// extract parent frame url
@@ -60,22 +92,25 @@
 		}
 		
 		if(el) {
+			var props = cfg.iframeAttributes || {};
 			var socket = new easyXDM.Socket({
 				remote: cfg.pluginUrl + 'intermediate.html?url=' + encodeURIComponent(frameUrl),
 				swf: cfg.pluginUrl + 'js/easyxdm/easyxdm.swf',
 				container: el,
+				props: props,
 				onMessage: function(message, origin) {
 					var tokens = message.split("\n");
 					var newFrameUrl = tokens[0];
 					var newFrameHeight = parseInt(tokens[1]);
-					this.container.getElementsByTagName("iframe")[0].style.height = (newFrameHeight + 100) + "px";
+					var frame = this.container.getElementsByTagName("iframe")[0];
+					frame.style.height = (newFrameHeight + 100) + "px";
+					if(cfg.autoScroll) scrollToEl(frame);
 					if(newFrameUrl != parentFrameUrl) {
 						parentFrameUrl = newFrameUrl;
 						if(cfg.mode == cfg.modeFragment) {
 							parentLocation.hash = escape(parentFrameUrl);
 						}
 						else if(cfg.mode == cfg.modeGet) {
-							console.log(parentLocation.search);
 							var params = parseQueryString(parentLocation.search);
 							params[cfg.getParam] = parentFrameUrl;
 							var newSearch = '';

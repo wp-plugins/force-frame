@@ -17,9 +17,13 @@ class ForceFrameAdmin {
 	const MODE_OPTION_NAME = 'force_frame_mode';
 	const GET_PARAM_OPTION_NAME = 'force_frame_get_param';
 	const USE_ABSOLUTE_URL_OPTION_NAME = 'force_frame_use_absolute_url';
+	const AUTO_SCROLL_OPTION_NAME = 'force_frame_auto_scroll';
+	const IFRAME_ATTRIBUTES_OPTION_NAME = 'force_frame_iframe_attributes';
 	const DEFAULT_GET_PARAM = 'frame';
 	const DEFAULT_USE_ABSOLUTE_URL = 0;
 	const DEFAULT_MODE = ForceFrame::MODE_FRAGMENT;
+	const DEFAULT_AUTO_SCROLL = 1;
+	const DEFAULT_IFRAME_ATTRIBUTES = 'width=100%';
 	const SCRIPTS_HOOK_NAME = 'settings_page_force-frame/force-frame';
 
 	public static function init() {
@@ -55,11 +59,15 @@ class ForceFrameAdmin {
 		register_setting(self::SETTINGS_GROUP, self::USE_ABSOLUTE_URL_OPTION_NAME);
 		register_setting(self::SETTINGS_GROUP, self::MODE_OPTION_NAME, array(__CLASS__, 'sanitize_mode_setting'));
 		register_setting(self::SETTINGS_GROUP, self::GET_PARAM_OPTION_NAME);
+		register_setting(self::SETTINGS_GROUP, self::AUTO_SCROLL_OPTION_NAME);
+		register_setting(self::SETTINGS_GROUP, self::IFRAME_ATTRIBUTES_OPTION_NAME);
 		add_settings_section(self::SETTINGS_SECTION, __('Force frame configuration', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'settings_section_text'), __FILE__);
 		add_settings_field(self::PARENT_URL_OPTION_NAME, __('Parent URL', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_parent_url_settings_fields'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::USE_ABSOLUTE_URL_OPTION_NAME, __('Use absolute URL', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_use_absolute_url_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::MODE_OPTION_NAME, __('Mode', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_mode_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::GET_PARAM_OPTION_NAME, __('GET parameter name', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_get_parameter_settings_field'), __FILE__, self::SETTINGS_SECTION);
+		add_settings_field(self::AUTO_SCROLL_OPTION_NAME, __('Auto-scroll', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_auto_scroll_settings_field'), __FILE__, self::SETTINGS_SECTION);
+		add_settings_field(self::IFRAME_ATTRIBUTES_OPTION_NAME, __('IFrame Attributes', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_iframe_attributes_settings_field'), __FILE__, self::SETTINGS_SECTION);
 	}
 	
 	public static function settings_section_text() {
@@ -110,6 +118,16 @@ class ForceFrameAdmin {
 		echo $output;
 	}
 	
+	public static function create_auto_scroll_settings_field() {
+		echo '<input type="checkbox" id="' . self::AUTO_SCROLL_OPTION_NAME . '" name="' . self::AUTO_SCROLL_OPTION_NAME . '" value="1"' . (self::get_auto_scroll()?' checked="checked"':'') . ' />';
+	}
+	
+	public static function create_iframe_attributes_settings_field() {
+		echo '<textarea id="' . self::IFRAME_ATTRIBUTES_OPTION_NAME . '" name="' . self::IFRAME_ATTRIBUTES_OPTION_NAME . '">';
+		echo esc_textarea(get_option(self::IFRAME_ATTRIBUTES_OPTION_NAME, self::DEFAULT_IFRAME_ATTRIBUTES));
+		echo '</textarea>';
+	}
+	
 	public static function get_parent_url() {
 		return get_option(self::PARENT_URL_OPTION_NAME, '');
 	}
@@ -123,8 +141,45 @@ class ForceFrameAdmin {
 		return !empty($value);
 	}
 	
+	public static function get_auto_scroll() {
+		$value = get_option(self::AUTO_SCROLL_OPTION_NAME, self::DEFAULT_AUTO_SCROLL);
+		return !empty($value);
+	}
+	
 	public static function get_mode() {
 		return get_option(self::MODE_OPTION_NAME, self::DEFAULT_MODE);
+	}
+	
+	public static function get_iframe_attributes() {
+		$attributesText = get_option(self::IFRAME_ATTRIBUTES_OPTION_NAME, self::DEFAULT_IFRAME_ATTRIBUTES);
+		$attributesText = str_replace("\r", '', $attributesText);
+		$attributeLines = explode("\n", $attributesText);
+		$attributes = array();
+		foreach($attributeLines as $line) {
+			$name = $line;
+			$value = '';
+			$equalPos = strpos($line, '=');
+			if($equalPos !== false) {
+				$name = trim(substr($line, 0, $equalPos));
+				$value = trim(substr($line, $equalPos + 1));
+			}
+			
+			if($name == 'style') {
+				$styleLines = explode(';', $value);
+				$value = array();
+				foreach($styleLines as $styleLine) {
+					$colonPos = strpos($styleLine, ':');
+					if($colonPos !== false) {
+						$styleName = trim(substr($styleLine, 0, $colonPos));
+						$styleValue = trim(substr($styleLine, $colonPos + 1));
+						$value[$styleName] = $styleValue;
+					}
+				}
+			}
+			$attributes[$name] = $value;
+		}
+		
+		return $attributes;
 	}
 }
 
@@ -158,7 +213,9 @@ class ForceFrame {
 				'useAbsoluteUrl' => ForceFrameAdmin::get_use_absolute_url(),
 				'mode' => ForceFrameAdmin::get_mode(),
 				'modeFragment' => ForceFrame::MODE_FRAGMENT,
-				'modeGet' => ForceFrame::MODE_GET
+				'modeGet' => ForceFrame::MODE_GET,
+				'autoScroll' => ForceFrameAdmin::get_auto_scroll(),
+				'iframeAttributes' => ForceFrameAdmin::get_iframe_attributes()
 			);
 			
 			echo 'var ForceFrameParentConfig = ' . json_encode($parentJsConfig) . ";\n";
@@ -207,7 +264,7 @@ var ForceFrameChildConfig = <?php echo json_encode($childJsConfig); ?>;
 	}
 	
 	private static function getJsFilename($name) {
-		if(!defined('WP_DEBUG') || !WP_DEBUG) $name .= '.min';
+// 		if(!defined('WP_DEBUG') || !WP_DEBUG) $name .= '.min';
 		$name .= '.js';
 		return $name;
 	}
