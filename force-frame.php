@@ -264,7 +264,7 @@ var ForceFrameChildConfig = <?php echo json_encode($childJsConfig); ?>;
 	}
 	
 	private static function getJsFilename($name) {
-// 		if(!defined('WP_DEBUG') || !WP_DEBUG) $name .= '.min';
+		if(!defined('WP_DEBUG') || !WP_DEBUG) $name .= '.min';
 		$name .= '.js';
 		return $name;
 	}
