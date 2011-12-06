@@ -55,7 +55,12 @@
 	}
 	
 	if(window.easyXDM && window[configVar]) {
-		var easyXDM = window.easyXDM.noConflict('force-frame');
+		// namespacing easyxdm
+		window.ForceFrameEasyXDM = {
+			easyXDM: window.easyXDM.noConflict('ForceFrameEasyXDM')
+		};
+		var easyXDM = window.ForceFrameEasyXDM.easyXDM;
+
 		var cfg = window[configVar];
 		
 		// extract parent frame url
