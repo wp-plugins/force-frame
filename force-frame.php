@@ -72,7 +72,12 @@ class ForceFrameAdmin {
 	
 	public static function settings_section_text() {
 		?>
-<p><?php echo sprintf(__('In order to force this Wordpress site inside a frame or iframe, the <strong>Parent URL</strong> must point to a web page that contains a frame or iframe pointing to <a href="%s">the homepage of this site</a>. This plugin will propagate the correct URL of the iframe to the URL of the parent window; this way, if the parent URL is shared among users, the iframe will load the correct page instead of the homepage.', FORCE_FRAME_TEXT_DOMAIN), get_bloginfo('url')); ?></p>
+<p><?php echo __('In order to force this Wordpress site inside a frame or iframe, the <strong>Parent URL</strong> must point to the web page that will contain the iframe; you have to copy and paste the following code in the place in the parent page where you want the iframe to be created.', FORCE_FRAME_TEXT_DOMAIN); ?></p>
+<?php 
+$parentJsCode = '<script type="text/javascript" src="' . esc_attr(ForceFrame::getParentJsUrl()) . '"></script>';
+?>
+<p><pre><?php echo esc_html($parentJsCode); ?></pre></p>
+<p><?php echo __('This plugin will propagate the correct URL of the iframe to the URL of the parent window; this way, if the parent URL is shared among users, the iframe will load the correct page instead of the homepage.', FORCE_FRAME_TEXT_DOMAIN); ?></p>
 <p><?php echo __('This plugin can work in two distinct modes:', FORCE_FRAME_TEXT_DOMAIN); ?></p>
 <ul style="list-style: disc; padding-left: 2.5em;">
 	<li><strong><?php echo __('Fragment mode', FORCE_FRAME_TEXT_DOMAIN); ?></strong>: <?php echo __('the correct url of the frame will be propagated using the fragment part of the parent window\'s URL', FORCE_FRAME_TEXT_DOMAIN); ?></li>
@@ -259,7 +264,7 @@ var ForceFrameChildConfig = <?php echo json_encode($childJsConfig); ?>;
 		return !empty($parentUrl);
 	}
 	
-	private static function getParentJsUrl() {
+	public static function getParentJsUrl() {
 		return admin_url('admin-ajax.php') . '?action=' . self::PARENT_JS_AJAX_ACTION;
 	}
 	
