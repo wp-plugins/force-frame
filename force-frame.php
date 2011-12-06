@@ -18,11 +18,13 @@ class ForceFrameAdmin {
 	const GET_PARAM_OPTION_NAME = 'force_frame_get_param';
 	const USE_ABSOLUTE_URL_OPTION_NAME = 'force_frame_use_absolute_url';
 	const AUTO_SCROLL_OPTION_NAME = 'force_frame_auto_scroll';
+	const AUTO_ADJUST_HEIGHT_OPTION_NAME = 'force_frame_auto_adjust_height';
 	const IFRAME_ATTRIBUTES_OPTION_NAME = 'force_frame_iframe_attributes';
 	const DEFAULT_GET_PARAM = 'frame';
 	const DEFAULT_USE_ABSOLUTE_URL = 0;
 	const DEFAULT_MODE = ForceFrame::MODE_FRAGMENT;
 	const DEFAULT_AUTO_SCROLL = 1;
+	const DEFAULT_AUTO_ADJUST_HEIGHT = 0;
 	const DEFAULT_IFRAME_ATTRIBUTES = 'width=100%';
 	const SCRIPTS_HOOK_NAME = 'settings_page_force-frame/force-frame';
 
@@ -60,13 +62,15 @@ class ForceFrameAdmin {
 		register_setting(self::SETTINGS_GROUP, self::MODE_OPTION_NAME, array(__CLASS__, 'sanitize_mode_setting'));
 		register_setting(self::SETTINGS_GROUP, self::GET_PARAM_OPTION_NAME);
 		register_setting(self::SETTINGS_GROUP, self::AUTO_SCROLL_OPTION_NAME);
+		register_setting(self::SETTINGS_GROUP, self::AUTO_ADJUST_HEIGHT_OPTION_NAME);
 		register_setting(self::SETTINGS_GROUP, self::IFRAME_ATTRIBUTES_OPTION_NAME);
 		add_settings_section(self::SETTINGS_SECTION, __('Force frame configuration', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'settings_section_text'), __FILE__);
 		add_settings_field(self::PARENT_URL_OPTION_NAME, __('Parent URL', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_parent_url_settings_fields'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::USE_ABSOLUTE_URL_OPTION_NAME, __('Use absolute URL', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_use_absolute_url_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::MODE_OPTION_NAME, __('Mode', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_mode_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::GET_PARAM_OPTION_NAME, __('GET parameter name', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_get_parameter_settings_field'), __FILE__, self::SETTINGS_SECTION);
-		add_settings_field(self::AUTO_SCROLL_OPTION_NAME, __('Auto-scroll', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_auto_scroll_settings_field'), __FILE__, self::SETTINGS_SECTION);
+		add_settings_field(self::AUTO_SCROLL_OPTION_NAME, __('Auto scroll', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_auto_scroll_settings_field'), __FILE__, self::SETTINGS_SECTION);
+		add_settings_field(self::AUTO_ADJUST_HEIGHT_OPTION_NAME, __('Auto adjust height', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_auto_adjust_height_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::IFRAME_ATTRIBUTES_OPTION_NAME, __('IFrame Attributes', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_iframe_attributes_settings_field'), __FILE__, self::SETTINGS_SECTION);
 	}
 	
@@ -127,6 +131,10 @@ $parentJsCode = '<script type="text/javascript" src="' . esc_attr(ForceFrame::ge
 		echo '<input type="checkbox" id="' . self::AUTO_SCROLL_OPTION_NAME . '" name="' . self::AUTO_SCROLL_OPTION_NAME . '" value="1"' . (self::get_auto_scroll()?' checked="checked"':'') . ' />';
 	}
 	
+	public static function create_auto_adjust_height_settings_field() {
+		echo '<input type="checkbox" id="' . self::AUTO_ADJUST_HEIGHT_OPTION_NAME . '" name="' . self::AUTO_ADJUST_HEIGHT_OPTION_NAME . '" value="1"' . (self::get_auto_adjust_height()?' checked="checked"':'') . ' />';
+	}
+	
 	public static function create_iframe_attributes_settings_field() {
 		echo '<textarea id="' . self::IFRAME_ATTRIBUTES_OPTION_NAME . '" name="' . self::IFRAME_ATTRIBUTES_OPTION_NAME . '">';
 		echo esc_textarea(get_option(self::IFRAME_ATTRIBUTES_OPTION_NAME, self::DEFAULT_IFRAME_ATTRIBUTES));
@@ -148,6 +156,11 @@ $parentJsCode = '<script type="text/javascript" src="' . esc_attr(ForceFrame::ge
 	
 	public static function get_auto_scroll() {
 		$value = get_option(self::AUTO_SCROLL_OPTION_NAME, self::DEFAULT_AUTO_SCROLL);
+		return !empty($value);
+	}
+	
+	public static function get_auto_adjust_height() {
+		$value = get_option(self::AUTO_ADJUST_HEIGHT_OPTION_NAME, self::DEFAULT_AUTO_ADJUST_HEIGHT);
 		return !empty($value);
 	}
 	
@@ -220,6 +233,7 @@ class ForceFrame {
 				'modeFragment' => ForceFrame::MODE_FRAGMENT,
 				'modeGet' => ForceFrame::MODE_GET,
 				'autoScroll' => ForceFrameAdmin::get_auto_scroll(),
+				'autoAdjustHeight' => ForceFrameAdmin::get_auto_adjust_height(),
 				'iframeAttributes' => ForceFrameAdmin::get_iframe_attributes()
 			);
 			

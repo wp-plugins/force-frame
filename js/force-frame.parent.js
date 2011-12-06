@@ -103,7 +103,7 @@
 					var newFrameUrl = tokens[0];
 					var newFrameHeight = parseInt(tokens[1]);
 					var frame = this.container.getElementsByTagName("iframe")[0];
-					frame.style.height = (newFrameHeight + 100) + "px";
+					if(cfg.autoAdjustHeight) frame.style.height = (newFrameHeight + 100) + "px";
 					if(cfg.autoScroll) scrollToEl(frame);
 					if(newFrameUrl != parentFrameUrl) {
 						parentFrameUrl = newFrameUrl;
