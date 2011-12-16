@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Force Frame
-Description: A plugin that forces the Wordpress site as an iframe into a configurable parent site
+Description: A plugin that forces the Wordpress site as an iframe into a configurable parent site, with cross-domain support
 Version: 1.2
 Author: Lorenzo Carrara <lorenzo.carrara@cubica.eu>
 Author URI: http://www.cubica.eu
@@ -20,6 +20,7 @@ class ForceFrameAdmin {
 	const AUTO_SCROLL_OPTION_NAME = 'force_frame_auto_scroll';
 	const AUTO_ADJUST_HEIGHT_OPTION_NAME = 'force_frame_auto_adjust_height';
 	const IFRAME_ATTRIBUTES_OPTION_NAME = 'force_frame_iframe_attributes';
+	const WHITELISTED_IPS_OPTION_NAME = 'force_frame_whitelisted_ips';
 	const DEFAULT_GET_PARAM = 'frame';
 	const DEFAULT_USE_ABSOLUTE_URL = 0;
 	const DEFAULT_MODE = ForceFrame::MODE_FRAGMENT;
@@ -64,32 +65,44 @@ class ForceFrameAdmin {
 		register_setting(self::SETTINGS_GROUP, self::AUTO_SCROLL_OPTION_NAME);
 		register_setting(self::SETTINGS_GROUP, self::AUTO_ADJUST_HEIGHT_OPTION_NAME);
 		register_setting(self::SETTINGS_GROUP, self::IFRAME_ATTRIBUTES_OPTION_NAME);
+		register_setting(self::SETTINGS_GROUP, self::WHITELISTED_IPS_OPTION_NAME, array(__CLASS__, 'sanitize_whitelisted_ips_setting'));
 		add_settings_section(self::SETTINGS_SECTION, __('Force frame configuration', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'settings_section_text'), __FILE__);
-		add_settings_field(self::PARENT_URL_OPTION_NAME, __('Parent URL', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_parent_url_settings_fields'), __FILE__, self::SETTINGS_SECTION);
+		add_settings_field(self::PARENT_URL_OPTION_NAME, __('Parent URL', FORCE_FRAME_TEXT_DOMAIN) . '&nbsp;<strong>*</strong>', array(__CLASS__, 'create_parent_url_settings_fields'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::USE_ABSOLUTE_URL_OPTION_NAME, __('Use absolute URL', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_use_absolute_url_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::MODE_OPTION_NAME, __('Mode', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_mode_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::GET_PARAM_OPTION_NAME, __('GET parameter name', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_get_parameter_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::AUTO_SCROLL_OPTION_NAME, __('Auto scroll', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_auto_scroll_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::AUTO_ADJUST_HEIGHT_OPTION_NAME, __('Auto adjust height', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_auto_adjust_height_settings_field'), __FILE__, self::SETTINGS_SECTION);
 		add_settings_field(self::IFRAME_ATTRIBUTES_OPTION_NAME, __('IFrame Attributes', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_iframe_attributes_settings_field'), __FILE__, self::SETTINGS_SECTION);
+		add_settings_field(self::WHITELISTED_IPS_OPTION_NAME, __('Whitelisted IPs', FORCE_FRAME_TEXT_DOMAIN), array(__CLASS__, 'create_whitelisted_ips_settings_field'), __FILE__, self::SETTINGS_SECTION);
 	}
 	
 	public static function settings_section_text() {
 		?>
-<p><?php echo __('In order to force this Wordpress site inside a frame or iframe, the <strong>Parent URL</strong> must point to the web page that will contain the iframe; you have to copy and paste the following code in the place in the parent page where you want the iframe to be created.', FORCE_FRAME_TEXT_DOMAIN); ?></p>
-<?php 
-$parentJsCode = '<script type="text/javascript" src="' . esc_attr(ForceFrame::getParentJsUrl()) . '"></script>';
-?>
-<p><pre><?php echo esc_html($parentJsCode); ?></pre></p>
-<p><?php echo __('This plugin will propagate the correct URL of the iframe to the URL of the parent window; this way, if the parent URL is shared among users, the iframe will load the correct page instead of the homepage.', FORCE_FRAME_TEXT_DOMAIN); ?></p>
-<p><?php echo __('This plugin can work in two distinct modes:', FORCE_FRAME_TEXT_DOMAIN); ?></p>
+<p><?php echo __('In order to force this Wordpress site inside an iframe on another site, the following steps are required:', FORCE_FRAME_TEXT_DOMAIN); ?></p>
+<ol>
+	<li>
+		<?php echo __('Fill the <strong>Parent URL</strong> field below with the URL of the web page where the iframe should be created, for example:', FORCE_FRAME_TEXT_DOMAIN); ?>
+		<p>
+			<pre><?php echo esc_html('http://www.example.com/parent-page.php'); ?></pre>
+		</p>
+	</li>
+	<li>
+		<?php echo __('Add the following snippet inside the HTML of the parent page, in the spot where you want the iframe to be created:', FORCE_FRAME_TEXT_DOMAIN); ?>
+		<p>
+			<pre><?php echo esc_html('<script type="text/javascript" src="' . esc_attr(ForceFrame::getParentJsUrl()) . '"></script>'); ?></pre>
+		</p>
+	</li>
+</ol>
+<p><?php echo __('You\'re done!', FORCE_FRAME_TEXT_DOMAIN); ?></p>
+<p><?php echo __('Beside showing your site inside an iframe, this plugin does the following:', FORCE_FRAME_TEXT_DOMAIN); ?></p>
 <ul style="list-style: disc; padding-left: 2.5em;">
-	<li><strong><?php echo __('Fragment mode', FORCE_FRAME_TEXT_DOMAIN); ?></strong>: <?php echo __('the correct url of the frame will be propagated using the fragment part of the parent window\'s URL', FORCE_FRAME_TEXT_DOMAIN); ?></li>
-	<li><strong><?php echo __('GET mode', FORCE_FRAME_TEXT_DOMAIN); ?></strong>: <?php echo __('the correct url of the frame will be propagated in a GET parameter appended to the parent window\'s URL', FORCE_FRAME_TEXT_DOMAIN); ?></li>
+	<li><?php echo sprintf(__('when the iframe is loaded, and each time the user navigates to a different url in your site inside the iframe, force-frame communicates the URL of your site to the parent site using %1$s;', FORCE_FRAME_TEXT_DOMAIN), '<a href="http://easyxdm.net" target="_blank">easyXDM</a>'); ?></li>
+	<li><?php echo __('the parent site then copies that URL inside the fragment or a GET parameter of its URL;', FORCE_FRAME_TEXT_DOMAIN); ?></li>
+	<li><?php echo __('this way, if the user shares the parent site\'s URL with someone else, it will contain a reference to the correct URL of your site;', FORCE_FRAME_TEXT_DOMAIN); ?></li>
+	<li><?php echo __('force-frame will use that reference in order to load the correct page of your site inside the iframe.', FORCE_FRAME_TEXT_DOMAIN); ?></li>
 </ul>
-<p><?php echo __('<strong>Fragment mode</strong> is preferable because the parent site will never reload, but is not applicable if the parent site needs to use the fragment part of its URL for other purposes; in that case, <strong>GET mode</strong> is a forced choice.'); ?></p>
-<p><?php echo __('If you choose or need to use <strong>GET mode</strong>, you can customize the <strong>GET parameter name</strong> in order to avoid conflicts with other known parameters.'); ?></p>
-<p><?php echo __('Finally, you can choose to propagate the absolute URL of the iframe instead of the relative path, using the <strong>Use absolute URL</strong> setting.'); ?></p>
+<p><?php echo __('Additional options are available: see each setting\'s description for further details.', FORCE_FRAME_TEXT_DOMAIN); ?></p>
 		<?php
 	}
 	
@@ -105,16 +118,46 @@ $parentJsCode = '<script type="text/javascript" src="' . esc_attr(ForceFrame::ge
 		return $value;
 	}
 	
+	public static function sanitize_whitelisted_ips_setting($value) {
+		$rawIPs = explode("\n", $value);
+		$ips = array();
+		foreach($rawIPs as $rawIP) {
+			$ip = trim(str_replace("\r", "", $rawIP));
+			if(!empty($ip)) {
+				if(!preg_match('/^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/', $ip)) {
+					add_settings_error(self::WHITELISTED_IPS_OPTION_NAME, 'force_frame_invalid_whitelisted_ips', __('Whitelisted IPs are not in the right format', FORCE_FRAME_TEXT_DOMAIN));
+					$ips = self::get_whitelisted_ips();
+					break;
+				}
+				
+				$ips[] = $ip;
+			}
+		}
+		
+		return implode("\n", $ips);
+	}
+		
+	
 	public static function create_parent_url_settings_fields() {
-		echo '<input type="text" maxlength="255" id="' . self::PARENT_URL_OPTION_NAME . '" name="' . self::PARENT_URL_OPTION_NAME . '" value="' . esc_attr(self::get_parent_url()) . '" />';
+		echo '<input type="text" maxlength="255" id="' . self::PARENT_URL_OPTION_NAME . '" name="' . self::PARENT_URL_OPTION_NAME . '" value="' . esc_attr(self::get_parent_url()) . '" style="width: 400px;" />';
 	}
 	
 	public static function create_get_parameter_settings_field() {
-		echo '<input type="text" maxlength="255" id="' . self::GET_PARAM_OPTION_NAME . '" name="' . self::GET_PARAM_OPTION_NAME . '" value="' . esc_attr(self::get_get_param()) . '" />';
+		$output = '';
+		$output .= '<input type="text" maxlength="255" id="' . self::GET_PARAM_OPTION_NAME . '" name="' . self::GET_PARAM_OPTION_NAME . '" value="' . esc_attr(self::get_get_param()) . '" />';
+		$output .= '<p class="description">';
+		$output .= __('If you\'re using GET mode, here you can customize the GET parameter name used by force-frame.', FORCE_FRAME_TEXT_DOMAIN);
+		$output .= '</p>';
+		echo $output;
 	}
 	
 	public static function create_use_absolute_url_settings_field() {
-		echo '<input type="checkbox" id="' . self::USE_ABSOLUTE_URL_OPTION_NAME . '" name="' . self::USE_ABSOLUTE_URL_OPTION_NAME . '" value="1"' . (self::get_use_absolute_url()?' checked="checked"':'') . ' />';
+		$output = '';
+		$output .= '<input type="checkbox" id="' . self::USE_ABSOLUTE_URL_OPTION_NAME . '" name="' . self::USE_ABSOLUTE_URL_OPTION_NAME . '" value="1"' . (self::get_use_absolute_url()?' checked="checked"':'') . ' />';
+		$output .= '<p class="description">';
+		$output .= __('By default, force-frame will just propagate the path part of your site\'s URL to the parent; if you want the absolute URL to be propagated, enable this option.', FORCE_FRAME_TEXT_DOMAIN);
+		$output .= '</p>';
+		echo $output;
 	}
 	
 	public static function create_mode_settings_field() {
@@ -124,21 +167,56 @@ $parentJsCode = '<script type="text/javascript" src="' . esc_attr(ForceFrame::ge
 		$output .= '&nbsp;<label for="' . self::MODE_OPTION_NAME . '_' . ForceFrame::MODE_FRAGMENT . '">' . __('Fragment', FORCE_FRAME_TEXT_DOMAIN) . '</label><br/>';
 		$output .= '<input type="radio" name="' . self::MODE_OPTION_NAME . '" id="' . self::MODE_OPTION_NAME . '_' . ForceFrame::MODE_GET . '" value="' . ForceFrame::MODE_GET . '"' . (($value == ForceFrame::MODE_GET)?' checked="checked"':'') . ' />';
 		$output .= '&nbsp;<label for="' . self::MODE_OPTION_NAME . '_' . ForceFrame::MODE_GET . '">' . __('GET', FORCE_FRAME_TEXT_DOMAIN) . '</label>';
+		$output .= '<p class="description">';
+		$output .= __('By default, force-frame will use the fragment part of the parent\'s URL to propagate the URL of your site; however, if the parent site must use its fragment for other purposes, force-frame can use a configurable GET parameter instead. Fragment mode is generally preferred because the parent doesn\'t reload each time the user navigates to a different URL in the iframe, while it does in GET mode.', FORCE_FRAME_TEXT_DOMAIN);
+		$output .= '</p>';
 		echo $output;
 	}
 	
 	public static function create_auto_scroll_settings_field() {
-		echo '<input type="checkbox" id="' . self::AUTO_SCROLL_OPTION_NAME . '" name="' . self::AUTO_SCROLL_OPTION_NAME . '" value="1"' . (self::get_auto_scroll()?' checked="checked"':'') . ' />';
+		$output = '';
+		$output .= '<input type="checkbox" id="' . self::AUTO_SCROLL_OPTION_NAME . '" name="' . self::AUTO_SCROLL_OPTION_NAME . '" value="1"' . (self::get_auto_scroll()?' checked="checked"':'') . ' />';
+		$output .= '<p class="description">';
+		$output .= __('If enabled, force-frame will scroll the browser\'s window to the top of the iframe each time the user navigates to a different url in the iframe (only if the top is not already visible).', FORCE_FRAME_TEXT_DOMAIN);
+		$output .= '</p>';
+		echo $output;
 	}
 	
 	public static function create_auto_adjust_height_settings_field() {
-		echo '<input type="checkbox" id="' . self::AUTO_ADJUST_HEIGHT_OPTION_NAME . '" name="' . self::AUTO_ADJUST_HEIGHT_OPTION_NAME . '" value="1"' . (self::get_auto_adjust_height()?' checked="checked"':'') . ' />';
+		$output = '';
+		$output .= '<input type="checkbox" id="' . self::AUTO_ADJUST_HEIGHT_OPTION_NAME . '" name="' . self::AUTO_ADJUST_HEIGHT_OPTION_NAME . '" value="1"' . (self::get_auto_adjust_height()?' checked="checked"':'') . ' />';
+		$output .= '<p class="description">';
+		$output .= __('If enabled, force-frame will compute and adjust the iframe height based on its contents whene it is first loaded and when the user navigates to a different url inside it. If you have specified the height attribute below, that value will be overridden by the computed value.', FORCE_FRAME_TEXT_DOMAIN);
+		$output .= '</p>';
+		echo $output;
 	}
 	
 	public static function create_iframe_attributes_settings_field() {
-		echo '<textarea id="' . self::IFRAME_ATTRIBUTES_OPTION_NAME . '" name="' . self::IFRAME_ATTRIBUTES_OPTION_NAME . '">';
-		echo esc_textarea(get_option(self::IFRAME_ATTRIBUTES_OPTION_NAME, self::DEFAULT_IFRAME_ATTRIBUTES));
-		echo '</textarea>';
+		$output = '';
+		$output .= '<textarea id="' . self::IFRAME_ATTRIBUTES_OPTION_NAME . '" name="' . self::IFRAME_ATTRIBUTES_OPTION_NAME . '" style="width: 400px; height: 200px;">';
+		$output .= esc_textarea(get_option(self::IFRAME_ATTRIBUTES_OPTION_NAME, self::DEFAULT_IFRAME_ATTRIBUTES));
+		$output .= '</textarea>';
+		$output .= '<p class="description">';
+		$output .= __('Insert here a list of attributes that will be added to the iframe. Add the attributes one per line, using the format <strong>attribute_name</strong>=<strong>attribute_value</strong>. For example:', FORCE_FRAME_TEXT_DOMAIN);
+		$output .= '</p>';
+		$output .= '<p><pre>';
+		$output .= esc_html("width=500\nscrolling=no\nstyle=margin-left:100px; margin-right:50px;");
+		$output .= '</pre></p>';
+		echo $output;
+	}
+	
+	public static function create_whitelisted_ips_settings_field() {
+		$output = '';
+		$output .= '<textarea id="' . self::WHITELISTED_IPS_OPTION_NAME . '" name="' . self::WHITELISTED_IPS_OPTION_NAME . '" style="width: 400px; height: 200px;">';
+		$output .= esc_textarea(get_option(self::WHITELISTED_IPS_OPTION_NAME, ''));
+		$output .= '</textarea>';
+		$output .= '<p class="description">';
+		$output .= __('Insert here a list of client IPs for which the site will not be forced inside the iframe, one per line, for example:', FORCE_FRAME_TEXT_DOMAIN);
+		$output .= '</p>';
+		$output .= '<p><pre>';
+		$output .= esc_html("123.123.123.123\n234.234.234.234");
+		$output .= '</pre></p>';
+		echo $output;
 	}
 	
 	public static function get_parent_url() {
@@ -199,6 +277,11 @@ $parentJsCode = '<script type="text/javascript" src="' . esc_attr(ForceFrame::ge
 		
 		return $attributes;
 	}
+	
+	public static function get_whitelisted_ips() {
+		$rawValue = get_option(self::WHITELISTED_IPS_OPTION_NAME, '');
+		return explode("\n", $rawValue);
+	}
 }
 
 class ForceFrame {
@@ -225,7 +308,6 @@ class ForceFrame {
 			$parentJsConfig = array(
 				'pluginUrl' => plugin_dir_url(__FILE__),
 				'parentJsUrl' => self::getParentJsUrl(),
-// 				'parentUrl' => ForceFrameAdmin::get_parent_url(),
 				'childUrl' => get_bloginfo('wpurl'),
 				'getParam' => ForceFrameAdmin::get_get_param(),
 				'useAbsoluteUrl' => ForceFrameAdmin::get_use_absolute_url(),
@@ -250,7 +332,7 @@ class ForceFrame {
 	}
 	
 	public static function wp_enqueue_scripts() {
-		wp_enqueue_script('force-frame.js');
+		if(self::isEnabled()) wp_enqueue_script('force-frame.js');
 	}
 	
 	public static function wp_head() {
@@ -275,7 +357,9 @@ var ForceFrameChildConfig = <?php echo json_encode($childJsConfig); ?>;
 	
 	public static function isEnabled() {
 		$parentUrl = ForceFrameAdmin::get_parent_url();
-		return !empty($parentUrl);
+		$whitelistedIPs = ForceFrameAdmin::get_whitelisted_ips();
+		$isClientWhiteListed = !empty($_SERVER['REMOTE_ADDR']) && in_array($_SERVER['REMOTE_ADDR'], $whitelistedIPs);
+		return !empty($parentUrl) && !$isClientWhiteListed;
 	}
 	
 	public static function getParentJsUrl() {
