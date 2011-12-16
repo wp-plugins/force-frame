@@ -6,7 +6,11 @@ Requires at least: 3.2.1
 Tested up to: 3.2.1
 Stable tag: 1.2
 
-Force a Wordpress site as an iframe into a configurable parent site, with cross-domain support.
+Force a WordPress site inside a frame or iframe.
+
+== !!IMPORTANT!! ==
+
+If you're upgrading to version 1.2 from a previous version, you will have to replace the iframe in the parent site with a script: please follow the instructions in the Force Frame settings page.
 
 == Description ==
 
