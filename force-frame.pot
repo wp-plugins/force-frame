@@ -1,0 +1,198 @@
+# Copyright (C) 2010 Force Frame
+# This file is distributed under the same license as the Force Frame package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Force Frame 1.2\n"
+"Report-Msgid-Bugs-To: http://wordpress.org/tag/force-frame\n"
+"POT-Creation-Date: 2011-12-16 18:13:07+00:00\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2010-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+
+#. #-#-#-#-#  plugin.pot (Force Frame 1.2)  #-#-#-#-#
+#. Plugin Name of the plugin/theme
+#: force-frame.php:38 force-frame.php:48
+msgid "Force Frame"
+msgstr ""
+
+#: force-frame.php:53
+msgid "Save Changes"
+msgstr ""
+
+#: force-frame.php:69
+msgid "Force frame configuration"
+msgstr ""
+
+#: force-frame.php:70
+msgid "Parent URL"
+msgstr ""
+
+#: force-frame.php:71
+msgid "Use absolute URL"
+msgstr ""
+
+#: force-frame.php:72
+msgid "Mode"
+msgstr ""
+
+#: force-frame.php:73
+msgid "GET parameter name"
+msgstr ""
+
+#: force-frame.php:74
+msgid "Auto scroll"
+msgstr ""
+
+#: force-frame.php:75
+msgid "Auto adjust height"
+msgstr ""
+
+#: force-frame.php:76
+msgid "IFrame Attributes"
+msgstr ""
+
+#: force-frame.php:77
+msgid "Whitelisted IPs"
+msgstr ""
+
+#: force-frame.php:82
+msgid ""
+"In order to force this Wordpress site inside an iframe on another site, the "
+"following steps are required:"
+msgstr ""
+
+#: force-frame.php:85
+msgid ""
+"Fill the <strong>Parent URL</strong> field below with the URL of the web "
+"page where the iframe should be created, for example:"
+msgstr ""
+
+#: force-frame.php:91
+msgid ""
+"Add the following snippet inside the HTML of the parent page, in the spot "
+"where you want the iframe to be created:"
+msgstr ""
+
+#: force-frame.php:97
+msgid "You're done!"
+msgstr ""
+
+#: force-frame.php:98
+msgid ""
+"Beside showing your site inside an iframe, this plugin does the following:"
+msgstr ""
+
+#: force-frame.php:100
+msgid ""
+"when the iframe is loaded, and each time the user navigates to a different "
+"url in your site inside the iframe, force-frame communicates the URL of your "
+"site to the parent site using %1$s;"
+msgstr ""
+
+#: force-frame.php:101
+msgid ""
+"the parent site then copies that URL inside the fragment or a GET parameter "
+"of its URL;"
+msgstr ""
+
+#: force-frame.php:102
+msgid ""
+"this way, if the user shares the parent site's URL with someone else, it "
+"will contain a reference to the correct URL of your site;"
+msgstr ""
+
+#: force-frame.php:103
+msgid ""
+"force-frame will use that reference in order to load the correct page of "
+"your site inside the iframe."
+msgstr ""
+
+#: force-frame.php:105
+msgid ""
+"Additional options are available: see each setting's description for further "
+"details."
+msgstr ""
+
+#: force-frame.php:114
+msgid "Invalid mode"
+msgstr ""
+
+#: force-frame.php:128
+msgid "Whitelisted IPs are not in the right format"
+msgstr ""
+
+#: force-frame.php:149
+msgid ""
+"If you're using GET mode, here you can customize the GET parameter name used "
+"by force-frame."
+msgstr ""
+
+#: force-frame.php:158
+msgid ""
+"By default, force-frame will just propagate the path part of your site's URL "
+"to the parent; if you want the absolute URL to be propagated, enable this "
+"option."
+msgstr ""
+
+#: force-frame.php:167
+msgid "Fragment"
+msgstr ""
+
+#: force-frame.php:169
+msgid "GET"
+msgstr ""
+
+#: force-frame.php:171
+msgid ""
+"By default, force-frame will use the fragment part of the parent's URL to "
+"propagate the URL of your site; however, if the parent site must use its "
+"fragment for other purposes, force-frame can use a configurable GET "
+"parameter instead. Fragment mode is generally preferred because the parent "
+"doesn't reload each time the user navigates to a different URL in the "
+"iframe, while it does in GET mode."
+msgstr ""
+
+#: force-frame.php:180
+msgid ""
+"If enabled, force-frame will scroll the browser's window to the top of the "
+"iframe each time the user navigates to a different url in the iframe (only "
+"if the top is not already visible)."
+msgstr ""
+
+#: force-frame.php:189
+msgid ""
+"If enabled, force-frame will compute and adjust the iframe height based on "
+"its contents whene it is first loaded and when the user navigates to a "
+"different url inside it. If you have specified the height attribute below, "
+"that value will be overridden by the computed value."
+msgstr ""
+
+#: force-frame.php:200
+msgid ""
+"Insert here a list of attributes that will be added to the iframe. Add the "
+"attributes one per line, using the format <strong>attribute_name</"
+"strong>=<strong>attribute_value</strong>. For example:"
+msgstr ""
+
+#: force-frame.php:214
+msgid ""
+"Insert here a list of client IPs for which the site will not be forced "
+"inside the iframe, one per line, for example:"
+msgstr ""
+
+#. Description of the plugin/theme
+msgid ""
+"A plugin that forces the Wordpress site as an iframe into a configurable "
+"parent site, with cross-domain support"
+msgstr ""
+
+#. Author of the plugin/theme
+msgid "Lorenzo Carrara <lorenzo.carrara@cubica.eu>"
+msgstr ""
+
+#. Author URI of the plugin/theme
+msgid "http://www.cubica.eu"
+msgstr ""
