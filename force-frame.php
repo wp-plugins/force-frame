@@ -31,6 +31,16 @@ class ForceFrameAdmin {
 
 	public static function init() {
 		add_action('admin_menu', array(__CLASS__, 'admin_menu'));
+		$parentUrl = self::get_parent_url();
+		if(empty($parentUrl)) add_action('admin_notices', array(__CLASS__, 'activation_notice'));
+	}
+	
+	public static function activation_notice() {
+		?>
+<div class="updated">
+	<p><?php echo sprintf(__('%1$s is not configured: go to the <a href="%2$s">settings page</a> and follow the instructions.', FORCE_FRAME_TEXT_DOMAIN), '<strong>Force Frame</strong>', 'options-general.php?page=force-frame/' . basename(__FILE__)); ?></p>
+</div>
+		<?php
 	}
 
 	public static function admin_menu() {
