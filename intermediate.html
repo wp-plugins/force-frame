@@ -5,15 +5,24 @@
 <title>Force Frame Intermediate Frame</title>
 <script type="text/javascript" src="js/easyxdm/easyxdm.min.js"></script>
 <script type="text/javascript">
-var forceFrameIntermediateSocket = new easyXDM.Socket({
-    swf: 'js/easyxdm/easyxdm.swf',
-    onReady: function(){
-        iframe = document.createElement("iframe");
-        iframe.frameBorder = 0;
-        document.body.appendChild(iframe);
-        iframe.src = easyXDM.query.url;
-    }
-});
+(function() {
+	if(window.easyXDM) {
+		//namespacing easyxdm
+		window.ForceFrameEasyXDM = {
+			easyXDM: window.easyXDM.noConflict('ForceFrameEasyXDM')
+		};
+		var easyXDM = window.ForceFrameEasyXDM.easyXDM;
+		var forceFrameIntermediateSocket = new easyXDM.Socket({
+		    swf: 'js/easyxdm/easyxdm.swf',
+		    onReady: function(){
+		        iframe = document.createElement("iframe");
+		        iframe.frameBorder = 0;
+		        document.body.appendChild(iframe);
+		        iframe.src = easyXDM.query.url;
+		    }
+		});
+	}
+})();
 </script>
 <style type="text/css">
 html, body {

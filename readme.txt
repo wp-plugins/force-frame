@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&encrypted=-----
 Tags: frame, iframe, forceframe, force, force-frame, crossdomain, easyxdm, xdm
 Requires at least: 3.2.1
 Tested up to: 3.2.1
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 
 Force a WordPress site inside an iframe.
 
@@ -57,6 +57,9 @@ Answer
 = 1.2.2 =
 * Added admin notices
 * Updated translations
+
+= 1.2.3 =
+* Corrected bug when parent had same origin as child
 
 == Upgrade Notice == 
 = 1.2 =
