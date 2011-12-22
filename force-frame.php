@@ -2,12 +2,12 @@
 /*
 Plugin Name: Force Frame
 Description: A plugin that forces the Wordpress site as an iframe into a configurable parent site, with cross-domain support
-Version: 1.2.3
+Version: 1.2.4
 Author: Lorenzo Carrara <lorenzo.carrara@cubica.eu>
 Author URI: http://www.cubica.eu
 */
 
-define('FORCE_FRAME_VERSION', '1.2.3');
+define('FORCE_FRAME_VERSION', '1.2.4');
 define('FORCE_FRAME_TEXT_DOMAIN', 'force_frame');
 
 class ForceFrameAdmin {

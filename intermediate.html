@@ -12,7 +12,7 @@
 			easyXDM: window.easyXDM.noConflict('ForceFrameEasyXDM')
 		};
 		var easyXDM = window.ForceFrameEasyXDM.easyXDM;
-		var forceFrameIntermediateSocket = new easyXDM.Socket({
+		window.forceFrameIntermediateSocket = new easyXDM.Socket({
 		    swf: 'js/easyxdm/easyxdm.swf',
 		    onReady: function(){
 		        iframe = document.createElement("iframe");
